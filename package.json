@@ -1,6 +1,6 @@
 {
   "name": "runworker",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "simple worker handler for node js",
   "main": "js/mod.js",
   "directories": {

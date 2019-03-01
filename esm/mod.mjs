@@ -332,7 +332,7 @@ function sendToMaster(key, msg) {
 // simple helper if the user wants to seperate the master from the main js
 function runMaster(mainJsFile) {
 	if (cluster.isMaster) 
-		return import(mainJsFile);  // handle error in the script that calls runMaster() !
+		return import(mainJsFile);  // = Promise. Handle error in the script that calls runMaster() !
 	else
 		return undefined;
 }

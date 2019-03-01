@@ -331,7 +331,7 @@ function sendToMaster(key, msg) {
 // simple helper if the user wants to seperate the master from the main js
 function runMaster(mainJsFile) {
 	if (cluster.isMaster)
-		return require(mainJsFile);
+		return new Promise((resolve,reject) => {try { let ret = require(mainJsFile); resolve(ret); } catch(err) {reject(err);} });// = Promise. Handle error in the script that calls runMaster() !
 	else
 		return undefined;
 }
