@@ -1,0 +1,10 @@
+{
+  "name": "mjs",
+  "version": "1.0.0",
+  "description": "",
+  "main": "mod.mjs",
+  "scripts": {
+  },
+  "author": "Nabil Redmann <repo@bananaacid.de>",
+  "license": "MIT"
+}

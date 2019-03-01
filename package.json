@@ -1,0 +1,38 @@
+{
+  "name": "runworker",
+  "version": "1.0.0",
+  "description": "simple worker handler for node js",
+  "main": "js/mod.js",
+  "directories": {
+    "lib": "lib",
+    "test": "test.js",
+    "test": "test.mjs"
+  },
+  "dependencies": {
+    "debug": "^4.1.1"
+  },
+  "devDependencies": {
+    "esm": "^3.2.6"
+  },
+  "scripts": {
+    "test": "node test.js/usecase.js --log",
+    "test:mjs": "node -r esm test.mjs/usecase.mjs --log"
+  },
+  "keywords": [
+    "cluster",
+    "worker",
+    "node",
+    "task",
+    "es6",
+    "esm",
+    "mjs",
+    "modules",
+    "export"
+  ],
+  "author": "Nabil Redmann <repo@bananaacid.de>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/BananaAcid/runworker.git"
+  }
+}
