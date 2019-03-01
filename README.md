@@ -30,7 +30,7 @@ if (isMaster)(async () => {
 })();
 ```
 
-/esm### worker.mjs
+### worker.mjs
 ```js
 export let test = str => str + '!';
 
@@ -40,7 +40,7 @@ process.stdin.resume(); //so the worker will not close instantly and will be abl
 
 
 ## .js / CommonJs Modules
-Is `require()` based.
+Is `require()` based. It has one advantage: the worker path can be relative.
 
 ### index.js
 ```js
