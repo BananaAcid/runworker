@@ -107,13 +107,13 @@ check out the `test.mjs/` and `test.js/` folders to see some code. The `usecase.
 
 # How it works
 using `runWorker(..)`
-1. master: spins off a fork, sets the script file path as property (is not used other then to for the user to be able to kick off another worker when it died)
+1. master: spins off a fork, sets the script file path as property (is not used other then to provide the user with the file path to be able to kick off another worker when it died)
 2. master: waits for the fork to have started
 3. master: tells (messages) the fork to load the worker script
 4. worker: answers (messages back) with a list of functions and how they are nested
-5. master: creates proxy functions with promises with the same object structure (to message a what function to call)
+5. master: creates proxy functions using promises of the same object structure (to message a worker what function to call)
 6. master: resolves the promise with the worker object
 
-now you are free to await the proxy functions on the worker object or listen to events (`.on(..)`).
+now you are free to await the proxy functions on the worker object or listen to events: `.on(..)`
 
-The normal cluster module and its IPC is used, so no speed difference in communication. BUT: the spin up time can be faster/slower - since the specific worker module file is loaded, when the fork has started is ready to communicate.
+The normal cluster module and its IPC is used, so no speed difference in communication. BUT: the spin up time can be faster/slower - since the specific worker module file is loaded, when the fork has started and is ready to communicate.
