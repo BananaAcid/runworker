@@ -1,12 +1,12 @@
 {
   "name": "runworker",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "simple worker handler for node js",
   "main": "js/mod.js",
   "directories": {
     "lib": "lib",
-    "test": "test.js",
-    "test": "test.mjs"
+    "examples.js": "examples.js",
+    "examples.mjs": "examples.mjs"
   },
   "dependencies": {
     "debug": "^4.1.1"
