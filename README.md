@@ -44,9 +44,7 @@ Is `require()` based. It has one advantage: the worker path can be relative.
 
 ### index.js
 ```js
-const rwMod = require('runworker');
-const runWorker = rwMod.runWorker;
-const isMaster = rwMod.isMaster;
+const {runWorker, isMaster} = require('runworker');
 
 if (isMaster)(async () => {
 
@@ -82,6 +80,8 @@ if (isMaster)(async () => {
 ```
 The long form `if(isMaster) { let x = async()=>{ /* code .. */ }; x(); }` ).
 
+- `cluster.workers[]` holds all workers
+
 ## Helpers
 The boolean constants `isMaster` and `isWorker` can be imported/required as well. They are streight from the internal cluster object.
 
@@ -90,13 +90,18 @@ The `runMaster(masterPathname)` can be used, to have your start script include t
 ## The worker object
 - `runWorker(workerPathname)`    -- needs to be required/imported to initialize a worker, returns a Promise to await, resolves as [Cluster Worker](https://nodejs.org/api/cluster.html#cluster_class_worker) with a few additions
 
-... gets additional members that can be used within the master on the worker object:
+_Note:_ `runWorker(workerPathname, [useModeFast = true])` has a useModeFast that toggles 2 ways of loading the worker script:
+1. __TRUE__: this way is faster: no IPC call to load script, but blocks longer on weak cpus
+2. __FALSE__: this way does perform better on single-core / dual-core: tells the fork using IPC to load the worker (less blocking)
+
+`runWorker()` returned worker gets additional members that can be used within the master on the worker object:
 - `...()`                        -- all the exported methods proxied (as Promises) from the worker module
 - `.sendToWorker(key, message)`  -- To send a custom message to the worker. **Usually you would use the proxied methods.** The worker can use `process.on('customKey', (msg)=>...)` to process it.
 - `.workerPathname`              -- To retrive the loaded worker script file path
 - all the usual [Cluster Worker](https://nodejs.org/api/cluster.html#cluster_class_worker) methods and properties apply
 - `cluster` - can be required/imported in the master script as well to use `cluster.on(..)`
 
+- `.process.pid` can be used to access the unique worker id
 ## messaging back
 
 - `sendToMaster(customKey, customMessage)` -- can be required/imported in the worker to send an event to the master. The master will be able to use `workerObj.on('customKey', (msg)=>...)` to receive it.

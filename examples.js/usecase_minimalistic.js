@@ -1,6 +1,4 @@
-const rwModule = require('../js/mod.js');
-const runWorker = rwModule.runWorker;
-const isMaster = rwModule.isMaster;
+const {runWorker, isMaster} = require('../js/mod.js');
 
 
 if (isMaster)(async () => {

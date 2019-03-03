@@ -7,19 +7,8 @@ import cluster from 'cluster';
 import crypto from 'crypto';
 const REF = 'runWorker';      // IPC message identifier
 const debugInfo = debug(REF);
-let AsyncFunction = Object.getPrototypeOf(async function(){}).constructor; // for instanceof compares
-
-
-// slave? load worker js file
-// never init twice, since a worker itself might require this file to get `sendToMaster()`
-if (cluster.isWorker)
-	process.on('message', (msg) => {
-		if (msg.ref !== REF) return;
-
-		// {ref:'runWorker.js', cmd: init, workerJsFile: string} )
-		if (msg.cmd == 'init' && msg.workerJsFile)
-			_runWorkerHandler(msg.workerJsFile);
-	});
+const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor; // for instanceof compares
+let worker_mode_fast = false;
 
 
 /** helper to get
@@ -77,7 +66,7 @@ function buildMap(obj, _key) {
 // convert an error class to a serializeable simple plain opbject
 function convertErrorToPlainObj(error) {
 	// convert the error to a plain object to be able to send it through to the master
-	var plainObject = {};
+	let plainObject = {};
 	Object.getOwnPropertyNames(error).forEach(key => plainObject[key] = error[key]);
 	return plainObject;
 }
@@ -85,7 +74,7 @@ function convertErrorToPlainObj(error) {
 // worker handler (in child instance)
 async function _runWorkerHandler(workerJsFile) {
 
-	debugInfo('initializing worker ' + workerJsFile)
+	debugInfo('initializing worker ' + workerJsFile);
 	// get worker js
 	let requiredWorker = await import(workerJsFile).catch((err)=>{
 		console.error(err);
@@ -151,7 +140,7 @@ async function _runWorkerHandler(workerJsFile) {
 		*/
 	});
 
-	debugInfo('anouncing fns');
+	debugInfo('announcing fns');
 	process.send( {ref: REF, cmd: 'content', obj: buildMap(requiredWorker) } );
 		//-> all exports as json_encode to runWorker()
 		// => ready (this will make runWorker return the object)
@@ -162,7 +151,7 @@ async function _runWorkerHandler(workerJsFile) {
 // appends to worker:
 //   .sendToWorker(key, message)  - to trigger a custom message
 //   .workerPathname              - the loaded worker script file path
-function runWorker(workerJsFile) {
+function runWorker(workerJsFile, useModeFast = true) {
 
 	return new Promise( (resolve, reject) => {
 	
@@ -171,7 +160,7 @@ function runWorker(workerJsFile) {
 
 		// spin off webservice/cluster and load _runWorkerHandler
 		// https://nodejs.org/api/cluster.html
-		let retObj = cluster.fork();
+		let retObj = cluster.fork(useModeFast ? {workerJsFile: workerJsFile} : undefined);
 		retObj.workerPathname = workerJsFile;   // just remember - will be available on all cluster functions returning the worker
 
 		// just for completeness
@@ -314,8 +303,10 @@ function runWorker(workerJsFile) {
 
 		});
 
-		// post-send workerJsFile to _runWorkerHandler
-		retObj.send( {ref: REF, cmd: 'init', workerJsFile: workerJsFile} );
+		if (!worker_mode_fast) {
+			// post-send workerJsFile to _runWorkerHandler
+			retObj.send( {ref: REF, cmd: 'init', workerJsFile: workerJsFile} );
+		}
 	});
 }
 
@@ -342,3 +333,29 @@ export {runMaster, runWorker, sendToMaster, cluster};
 
 export let isMaster = cluster.isMaster;
 export let isWorker = cluster.isWorker;
+
+
+
+// slave? load worker js file
+// never init twice, since a worker itself might require this file to get `sendToMaster()`
+if (cluster.isWorker && !global[REF+'_INIT']) {
+    global[REF+'_INIT'] = true; // run once only
+
+    // this way is faster: no IPC call to load script but blocks longer on weak cpus
+    let workerJsFile = process.env.workerJsFile;
+    if (workerJsFile) {
+        worker_mode_fast = true;
+        _runWorkerHandler(workerJsFile);
+    }
+
+    // this way does perform better on single-core / dual-core: tells the fork using IPC to load the worker (less blocking)
+    else {
+        process.on('message', (msg) => {
+            if (msg.ref !== REF) return;
+
+            // {ref:'runWorker.js', cmd: init, workerJsFile: string} )
+            if (msg.cmd == 'init' && msg.workerJsFile)
+                _runWorkerHandler(msg.workerJsFile);
+        });
+    }
+}

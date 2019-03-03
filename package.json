@@ -1,6 +1,6 @@
 {
   "name": "runworker",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "simple worker handler for node js",
   "main": "js/mod.js",
   "directories": {
@@ -15,8 +15,18 @@
     "esm": "^3.2.6"
   },
   "scripts": {
-    "test": "node test.js/usecase.js --log",
-    "test:mjs": "node -r esm test.mjs/usecase.mjs --log"
+    "test": "node examples.js/usecase.js --log",
+    "test:mjs": "node -r esm examples.mjs/usecase.mjs --log",
+
+    "examples.js:test_functions": "node examples.js/test_functions.js",
+    "examples.js:usecase_minimalistic": "node examples.js/usecase_minimalistic.js",
+    "examples.js:test_functions:debug": "DEBUG=* node examples.js/test_functions.js",
+    "examples.js:usecase_minimalistic:debug": "DEBUG=* node examples.js/usecase_minimalistic.js",
+
+    "examples.mjs:test_functions": "node -r esm examples.mjs/test_functions.mjs",
+    "examples.mjs:usecase_minimalistic": "node -r esm examples.mjs/usecase_minimalistic.mjs",
+    "examples.mjs:test_functions:debug": "DEBUG=* node -r esm examples.mjs/test_functions.mjs",
+    "examples.mjs:usecase_minimalistic:debug": "DEBUG=* node -r esm examples.mjs/usecase_minimalistic.mjs"
   },
   "keywords": [
     "cluster",

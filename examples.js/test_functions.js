@@ -1,7 +1,5 @@
 const debug = require('debug');
-const rwModule = require('../js/mod.js');
-const runWorker = rwModule.runWorker;
-const isMaster = rwModule.isMaster;
+const {runWorker, isMaster} = require('../js/mod.js');
 
 // handle log param -- windows and linux/osx have a different way of settung up env vars, so we use this to set debugs options
 if (~process.argv.indexOf('--log') || ~process.argv.indexOf('-l')) debug.enable('*');
@@ -10,7 +8,7 @@ if (~process.argv.indexOf('--log') || ~process.argv.indexOf('-l')) debug.enable(
 if (isMaster)(async () => {
 	console.log('Master init');
 
-	let worker = await runWorker(__dirname + '/worker.js');
+	let worker = await runWorker('./worker.js');
 	console.log('worker inited' /*, worker*/);
 	worker.on('error', (err)=>console.log(err));
 
@@ -34,7 +32,7 @@ if (isMaster)(async () => {
 	console.log('worker:action1 said: ', ret);
 
 
-	let worker2 = await runWorker(__dirname + '/worker.js');
+	let worker2 = await runWorker('./worker.js');
 	console.log('worker2 inited' /*, worker2*/);
 	worker2.on('error', (err)=>console.log(err));
 

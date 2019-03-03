@@ -1,8 +1,5 @@
 const cpus = require('os').cpus;
-const rwModule = require('../js/mod.js');
-const runWorker = rwModule.runWorker;
-const isMaster = rwModule.isMaster;
-const cluster = rwModule.cluster;
+const {runWorker, isMaster, cluster} = require('../js/mod.js');
 
 const numCPUs = cpus().length;
 

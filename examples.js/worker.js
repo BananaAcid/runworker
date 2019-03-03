@@ -1,4 +1,4 @@
-const sendToMaster = require('../js/mod.js').sendToMaster;
+const {sendToMaster} = require('../js/mod.js');
 
 module.exports = {
 	action1: async function(p1) {     //<-- all exported functions will be made available at the object
