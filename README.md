@@ -1,5 +1,5 @@
 # runworker
-Simple cluster worker module handling
+Simple cluster worker handling
 
 # Installation
 ```sh
@@ -7,8 +7,8 @@ $ npm i runworker
 ```
 
 # Usage
-1. load the worker script
-2. have the worker script `export` or `module.exports` functions to be callable from the master script
+1. init the worker script
+2. have the worker script `export` or `module.exports` functions/promises to be callable from the master script
 3. use those exported functions in your master script off the worker object
 
 ## .mjs / ECMAScript Modules
@@ -83,10 +83,19 @@ The long form `if(isMaster) { let x = async()=>{ /* code .. */ }; x(); }` ).
 ## Helpers
 The boolean constants `isMaster` and `isWorker` can be imported/required as well. They are streight from the internal cluster object.
 
-The `runMaster(masterPathname)` can be used, to have your start script include the master script (taking care of the `if (isMaster)` part). This is a `Promise` to `await` and catch errors on as well.
+`runMaster(masterPathname)` can be used, to have your start script include the master script (taking care of the `if (isMaster)` part). This is a `Promise` to `await` and catch errors on as well.
+
+## The worker script
+Export any function to be proxied to from the master script's worker object.
+
+Exported functions may be of type normal function, async function or promise. They may only return serializeable values (JSON.stringify compatible).
+
+Exported variables will not be proxied, use a custom getter or settter function. _The reason not it is not implemented using observables: If the value would be send through, the master script could have triggered a follow up function and the value might not yet have been set on the worker (race conditions)._
 
 ## The worker object
-- `runWorker(workerPathname)`    -- needs to be required/imported to initialize a worker, returns a Promise to await, resolves as [Cluster Worker](https://nodejs.org/api/cluster.html#cluster_class_worker) with a few additions
+__Is used in the master script.__
+
+- `runWorker(workerPathname)`    -- needs to be required/imported to initialize a worker, returns a Promise to await, resolves as [Cluster Worker](https://nodejs.org/api/cluster.html#cluster_class_worker) with a few additions.
 
 _Note:_ `runWorker(workerPathname [, useModeFast = true])` has a `useModeFast` that toggles 2 ways of loading the worker script:
 1. __TRUE__: is faster: no IPC call to load script, but blocks longer on weak cpus
@@ -99,16 +108,18 @@ _Note:_ `runWorker(workerPathname [, useModeFast = true])` has a `useModeFast` t
 - all the usual [Cluster Worker](https://nodejs.org/api/cluster.html#cluster_class_worker) methods and properties apply
     - `.process.pid` can be used to access the unique worker id
 
+_Note:_ Multiple workers can be instantiated from different or the same module scripts.
+
 `cluster` - can be required/imported in the master script as well to use `cluster.on(..)`
 
 `cluster.workers[]` holds all workers (worker pool)
 
 ## messaging back
+__From the worker script.__
 
 - `sendToMaster(customKey, customMessage)` -- can be required/imported in the worker to send an event to the master. The master will be able to use `workerObj.on('customKey', (msg)=>...)` to receive it.
 
 # Examples
-
 check out the `examples.mjs/` and `examples.js/` folders to see some code. The `usecase.*` files are rather complete in setting up a cluster. The _minimalistic_ versions are not - they lack catching errors.
 
 # How it works
