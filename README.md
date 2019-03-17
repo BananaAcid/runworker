@@ -12,7 +12,7 @@ $ npm i runworker
 3. use those exported functions in your master script off the worker object
 
 ## .mjs / ECMAScript Modules
-Uses `import` and `import()`, this is require free code (no magic constants and so on). You have to import `from 'runworker/esm'`.
+Uses `import` and `import()`, this is require free code (no magic constants and so on). You have to import `from 'runworker/esm'`. Starting the script with `node --experimental-modules ????.mjs` or `node -r esm ????.mjs`.
 
 ### index.mjs
 ```js
@@ -22,7 +22,7 @@ if (isMaster)(async () => {
 
 	let worker = await runWorker('..path..to..worker/worker.mjs');
 
-	let result = await worker.test('asd');
+	let result = await worker.test('asd');  // execute worker's exported fn 
 	console.log(result);
 
 	worker.kill();
@@ -36,7 +36,7 @@ export let test = str => str + '!';
 
 process.stdin.resume(); //so the worker will not close instantly and will be able to communicate
 ```
-... or any time consuming function.
+... or any worker function.
 
 
 ## .js / CommonJs Modules
@@ -50,7 +50,7 @@ if (isMaster)(async () => {
 
 	let worker = await runWorker('..path..to..worker/worker.mjs');
 
-	let result = await worker.test('asd');
+	let result = await worker.test('asd');  // execute worker's exported fn
 	console.log(result);
 
 	worker.kill();
@@ -64,7 +64,7 @@ module.exports.test = str => str + '!';
 
 process.stdin.resume(); //so the worker will not close instantly and will be able to communicate
 ```
-... or any time consuming function.
+... or any worker function.
 
 # Methods, functions, events
 
@@ -97,9 +97,14 @@ __Is used in the master script.__
 
 - `runWorker(workerPathname)`    -- needs to be required/imported to initialize a worker, returns a Promise to await, resolves as [Cluster Worker](https://nodejs.org/api/cluster.html#cluster_class_worker) with a few additions.
 
-_Note:_ `runWorker(workerPathname [, useModeFast = true])` has a `useModeFast` that toggles 2 ways of loading the worker script:
+_Note:_
+-  `runWorker(workerPathname [, useModeFast = true [, enableRespawn = false]])`
+- `runWorker(workerPathname, { useModeFast: true, enableRespawn: false })` (with option object, properties are optional)
+ has a `useModeFast` that toggles 2 ways of loading the worker script:
 1. __TRUE__: is faster: no IPC call to load script, but blocks longer on weak cpus
 2. __FALSE__: does perform better on weak single-core / dual-cores: tells the fork (using the IPC) to load the worker resulting in less blocking
+and has a `enableRespawn` that can be used to automatically listen to `on('error' ...)` and check for `.exitedAfterDisconnect` to run a new worker and triggers `.on('respawn', function(newWorker){ let old = this; ... })` on the worker object.
+
 
 `runWorker()` returned worker gets additional members that can be used within the master on the worker object:
 - `...()`                        -- all the exported methods proxied (as Promises) from the worker module

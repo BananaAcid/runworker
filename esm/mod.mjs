@@ -1,7 +1,10 @@
 /**
-	Nabil Redmann <repo@bananaacid.de>
-	License: MIT
-**/
+ * runworker - Simple cluster worker module handling
+ *
+ * @author Nabil Redmann <repo@bananaacid.de>
+ * @license MIT
+ */
+
 import debug from 'debug';
 import cluster from 'cluster';
 import crypto from 'crypto';
@@ -11,32 +14,39 @@ const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor; // 
 let worker_mode_fast = false;
 
 
-/** helper to get
-	{ type: 'Object',
-	  key: undefined,
-	  children:
-	   [ { type: 'Object',
-	       key: 'default',
-	       children:
-	        [ { type: 'AsyncFunction', key: 'action1' },
-	          { type: 'Function', key: 'action2' },
-	          { type: 'Promise', key: 'action3' },
-	          { type: 'Object',
-	            key: 'namespace',
-	            children: [ { type: 'Function', key: 'sub1' } ] },
-	          { type: 'Array',
-	            key: 'list',
-	            children:
-	             [ { type: 'Function', key: '0' },
-	               { type: 'Function', key: '1' } ] },
-	          { type: 'number', key: 'x' },
-	          { type: 'string', key: 'y' },
-	          { type: 'boolean', key: 'z' },
-	          { type: 'null', key: 'v1' },
-	          { type: 'Function', key: 'exit' },
-	          { type: 'Function', key: 'error' } ] },
-	     { type: 'Function', key: 'test' },
-	     { type: 'string', key: 'z' } ] }
+/**
+ * Builds a map of all properties of an object
+ *
+ * @param      {Object}  obj     The input object
+ * @param      {string}  _key    The property's key
+ * @return     {Object}  The map
+ * 
+ * @example
+ *	{ type: 'Object',
+ *	  key: undefined,
+ *	  children:
+ *	   [ { type: 'Object',
+ *	       key: 'default',
+ *	       children:
+ *	        [ { type: 'AsyncFunction', key: 'action1' },
+ *	          { type: 'Function', key: 'action2' },
+ *	          { type: 'Promise', key: 'action3' },
+ *	          { type: 'Object',
+ *	            key: 'namespace',
+ *	            children: [ { type: 'Function', key: 'sub1' } ] },
+ *	          { type: 'Array',
+ *	            key: 'list',
+ *	            children:
+ *	             [ { type: 'Function', key: '0' },
+ *	               { type: 'Function', key: '1' } ] },
+ *	          { type: 'number', key: 'x' },
+ *	          { type: 'string', key: 'y' },
+ *	          { type: 'boolean', key: 'z' },
+ *	          { type: 'null', key: 'v1' },
+ *	          { type: 'Function', key: 'exit' },
+ *	          { type: 'Function', key: 'error' } ] },
+ *	     { type: 'Function', key: 'test' },
+ *	     { type: 'string', key: 'z' } ] }
  */
 function buildMap(obj, _key) {
 	if (obj instanceof Function && !(obj instanceof AsyncFunction))
@@ -63,7 +73,12 @@ function buildMap(obj, _key) {
 		return {type: typeof obj, key: _key};
 }
 
-// convert an error class to a serializeable simple plain opbject
+/**
+ * convert an error class to a serializeable simple plain object
+ *
+ * @param      {Error}  error   The error
+ * @return     {Object} An object with all properties normalized
+ */
 function convertErrorToPlainObj(error) {
 	// convert the error to a plain object to be able to send it through to the master
 	let plainObject = {};
@@ -71,7 +86,11 @@ function convertErrorToPlainObj(error) {
 	return plainObject;
 }
 
-// worker handler (in child instance)
+/**
+ * worker handler (used in child instance)
+ *
+ * @param      {string}   workerJsFile  The worker js file path
+ */
 async function _runWorkerHandler(workerJsFile) {
 
 	debugInfo('initializing worker ' + workerJsFile);
@@ -124,7 +143,6 @@ async function _runWorkerHandler(workerJsFile) {
 			catch(err) { // thrown within the functions
 				// log locally
 				console.error(REF+':WORKER', err);
-
 				error = convertErrorToPlainObj(err);
 			}
 
@@ -146,12 +164,39 @@ async function _runWorkerHandler(workerJsFile) {
 		// => ready (this will make runWorker return the object)
 }
 
-// this is the function to call in the master to start a worker
-// workerJsFile requires a full path
-// appends to worker:
-//   .sendToWorker(key, message)  - to trigger a custom message
-//   .workerPathname              - the loaded worker script file path
-function runWorker(workerJsFile, useModeFast = true) {
+/**
+ * Start a worker
+ * 
+ * @desc
+ *   this is the function to call in the master to start a worker
+ *   appends to worker:
+ *     .sendToWorker(key, message)  - to trigger a custom message
+ *     .workerPathname              - the loaded worker script file path
+ *
+ * @param      {string}   workerJsFile           The worker js file, requires a full path (ESM version)
+ * @param      {boolean}  [useModeFast=true]     The use the fast mode to load the worker js file
+ * @param      {boolean}  [enableRespawn=false]  The enable automatic respawn, spin off a new worker on crash, triggers .on('respawn', function(newWorker){ let old = this; ... })
+ * @return     {Promise}  A promise that gets resolved when the worker is ready to be interfaced with
+ *//**
+ * Start a worker
+ * 
+ * @desc
+ *   this is the function to call in the master to start a worker
+ *   appends to worker:
+ *     .sendToWorker(key, message)  - to trigger a custom message
+ *     .workerPathname              - the loaded worker script file path
+ *
+ * @param      {string}   workerJsFile                   The worker js file, requires a full path (ESM version)
+ * @param      {object}   options                        Options
+ * @param      {boolean}  [options.useModeFast=true]     The use the fast mode to load the worker js file
+ * @param      {boolean}  [options.enableRespawn=false]  The enable automatic respawn, spin off a new worker on crash, triggers .on('respawn', function(newWorker){ let old = this; ... })
+ * @return     {Promise}  A promise that gets resolved when the worker is ready to be interfaced with
+ */
+function runWorker(workerJsFile, useModeFast = true, enableRespawn = false) {
+
+	let options = {useModeFast: useModeFast, enableRespawn: enableRespawn};
+	if (typeof useModeFast !== "boolean" && typeof useModeFast === "object")
+		options = {...options, ...useModeFast};
 
 	return new Promise( (resolve, reject) => {
 	
@@ -160,7 +205,7 @@ function runWorker(workerJsFile, useModeFast = true) {
 
 		// spin off webservice/cluster and load _runWorkerHandler
 		// https://nodejs.org/api/cluster.html
-		let retObj = cluster.fork(useModeFast ? {workerJsFile: workerJsFile} : undefined);
+		let retObj = cluster.fork(options.useModeFast ? {workerJsFile: workerJsFile} : undefined);
 		retObj.workerPathname = workerJsFile;   // just remember - will be available on all cluster functions returning the worker
 
 		// just for completeness
@@ -179,6 +224,16 @@ function runWorker(workerJsFile, useModeFast = true) {
 			console.error(err);
 			try { reject(new Error('Could not initialize worker. ' + err.message, workerJsFile)); } catch(_){} // for initial call
 		});
+
+		// Listen to exit to respawn. Afer error handler.
+		if (options.enableRespawn)
+			retObj.on('error', async function(err) {
+				if (retObj.exitedAfterDisconnect !== true) {
+					debugInfo('respawning ' + this.process.id);
+					let newWorker = await runWorker(workerJsFile, useModeFast, enableRespawn);
+					retObj.emit('respawn', newWorker);
+				}
+			});
 
 		// will be available to the return object
 		//retObj.on('disconnect', ()=>() ) // Noop
@@ -310,9 +365,15 @@ function runWorker(workerJsFile, useModeFast = true) {
 	});
 }
 
-// for worker to trigger custom events
-//  e.g. worker.on('customkey', msg=>console.log(msg))
-//       sendToMaster('customkey', msg=>console.log(msg))
+/**
+ * Trigger a custom event on the worker object at the master script
+ * @desc
+ *  e.g. master:  worker.on('customkey', msg=>console.log(msg))
+ *       worker:  sendToMaster('customkey', msg)
+ *
+ * @param      {string}  key     The custom event key
+ * @param      {Object}  msg     The message, must be a serializeable object
+ */
 function sendToMaster(key, msg) {
 	if (~['disconnect', 'exit', 'fork', 'listening', 'message', 'online', 'setup' /*, 'error'*/].indexOf(key))
 		throw new Error(`'${key}' is a reserved message keyword`);
@@ -320,7 +381,14 @@ function sendToMaster(key, msg) {
 	process.send( {ref: REF, cmd: 'emit', key: key, obj: msg} );
 }
 
-// simple helper if the user wants to seperate the master from the main js
+/**
+ * run a master script
+ * 
+ * @desc Simple helper if the user wants to seperate the master from the main js. Wraps the import with isMaster.
+ *
+ * @param      {string}  mainJsFile  The master js file
+ * @return     {Promise}  A promise that gets resolved with the exports of the master script, when it is loaded and executed
+ */
 function runMaster(mainJsFile) {
 	if (cluster.isMaster) 
 		return import(mainJsFile);  // = Promise. Handle error in the script that calls runMaster() !
@@ -335,9 +403,11 @@ export let isMaster = cluster.isMaster;
 export let isWorker = cluster.isWorker;
 
 
-
-// slave? load worker js file
-// never init twice, since a worker itself might require this file to get `sendToMaster()`
+/**
+ * slave? load worker js file
+ * 
+ * never init twice, since a worker itself might require this file to get `sendToMaster()`
+ */
 if (cluster.isWorker && !global[REF+'_INIT']) {
     global[REF+'_INIT'] = true; // run once only
 
