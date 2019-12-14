@@ -80,10 +80,10 @@ const {runWorker, isMaster} = require('runworker');
 if (isMaster) {
 	let newWorker = null;
 	runWorker('..path..to..worker/worker.mjs') // returns worker
-	.then( worker => newWorker = worker ) // returns worker
-	.then( worker.test('asd') ) // returns result
-	.then( console.log ) // returns nothing
-	.then( newWorker.kill ); // calls kill
+	.then( worker => newWorker = worker ) // save worker, returns worker
+	.then( worker => worker.test('asd') ) // execute worker's exported fn, returns result
+	.then( console.log ) // logs result, returns nothing
+	.then( newWorker.kill ); // calls kill, returns nothing
 }
 ```
 
