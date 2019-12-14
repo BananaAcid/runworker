@@ -70,6 +70,25 @@ process.stdin.resume(); //so the worker will not close instantly and will be abl
 ```
 ... or any worker function.
 
+## Old school: Promise based
+Naturally, you can use the Promise chain syntax instead of `await`
+
+### index.js
+```js
+const {runWorker, isMaster} = require('runworker');
+
+if (isMaster) {
+	let newWorker = null;
+	runWorker('..path..to..worker/worker.mjs') // returns worker
+	.then( worker => newWorker = worker ) // returns worker
+	.then( worker.test('asd') ) // returns result
+	.then( console.log ) // returns nothing
+	.then( newWorker.kill ); // calls kill
+}
+```
+
+... and worker as above.
+
 # Methods, functions, events
 
 ## The master script
@@ -82,7 +101,7 @@ if (isMaster)(async () => {
 
 })();
 ```
-The long form `if(isMaster) { let x = async()=>{ /* code .. */ }; x(); }` ).
+The long form is `if(isMaster) { let x = async()=>{ /* code .. */ }; x(); }`
 
 ## Helpers
 The boolean constants `isMaster` and `isWorker` can be imported/required as well. They are streight from the internal cluster object.
@@ -90,16 +109,16 @@ The boolean constants `isMaster` and `isWorker` can be imported/required as well
 `runMaster(masterPathname)` can be used, to have your start script include the master script (taking care of the `if (isMaster)` part). This is a `Promise` to `await` and catch errors on as well.
 
 ## The worker script
-Export any function to be proxied to from the master script's worker object.
+Export any function to be proxied to the master script's worker object.
 
-Exported functions may be of type normal function, async function or promise. They may only return serializeable values (JSON.stringify compatible).
+Exported functions may be of type: normal function, async function or promise. They may only return serializeable values (JSON.stringify compatible).
 
 Exported variables will not be proxied, use a custom getter or settter function. _The reason not it is not implemented using observables: If the value would be send through, the master script could have triggered a follow up function and the value might not yet have been set on the worker (race conditions)._
 
 ## The worker object
 __Is used in the master script.__
 
-- `runWorker(workerPathname)`    -- needs to be required/imported to initialize a worker, returns a Promise to await, resolves as [Cluster Worker](https://nodejs.org/api/cluster.html#cluster_class_worker) with a few additions.
+- `runWorker(workerPathname)`    -- needs to be required/imported to initialize a worker, returns a Promise to await, resolves as [Cluster Worker](https://nodejs.org/api/cluster.html#cluster_class_worker) with a few additions (mainly, the proxies to the exported functions - see additional members below)!
 
 _Note:_
 -  `runWorker(workerPathname [, useModeFast = true [, enableRespawn = false]])`
@@ -110,7 +129,7 @@ _Note:_
 and has a `enableRespawn` that can be used to automatically listen to `on('error' ...)` and check for `.exitedAfterDisconnect` to run a new worker and triggers `.on('respawn', function(newWorker){ let old = this; ... })` on the worker object.
 
 
-`runWorker()` returned worker gets additional members that can be used within the master on the worker object:
+`runWorker()` returned worker gets __additional members__ that can be used within the master on the worker object:
 - `...()`                        -- all the exported methods proxied (as Promises) from the worker module
 - `.sendToWorker(key, message)`  -- To send a custom message to the worker. **Usually you would use the proxied methods.** The worker can use `process.on('customKey', (msg)=>...)` to process it.
 - `.workerPathname`              -- To retrive the loaded worker script file path
@@ -119,7 +138,7 @@ and has a `enableRespawn` that can be used to automatically listen to `on('error
 
 _Note:_ Multiple workers can be instantiated from different or the same module scripts.
 
-`cluster` - can be required/imported in the master script as well to use `cluster.on(..)`
+`cluster` - can be required/imported in the master script as well from the `runworker module` to use `cluster.on(..)`
 
 `cluster.workers[]` holds all workers (worker pool)
 
