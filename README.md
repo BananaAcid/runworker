@@ -1,5 +1,9 @@
 # runworker
-Simple cluster worker handling
+Simple worker handling (in a cluster or just as multi threaded) in NodeJs.
+
+Any exported worker function can be awaited in the main script. Since it it using the clusters
+and Promises behind the scene, you may just use it to handle stuff multithreaded.
+Or orchestrate a worker pool.
 
 # Installation
 ```sh
