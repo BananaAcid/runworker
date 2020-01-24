@@ -140,7 +140,7 @@ _Note:_ Multiple workers can be instantiated from different or the same module s
 
 `cluster` - can be required/imported in the master script as well from the `runworker module` to use `cluster.on(..)`
 
-`cluster.workers[]` holds all workers (worker pool)
+`cluster.workers{}` holds all workers (worker pool), [Nodejs API: cluster.workers](https://nodejs.org/api/cluster.html#cluster_cluster_workers) - get the length: `Object.keys(cluster.workers).length`
 
 ## messaging back
 __From the worker script.__
