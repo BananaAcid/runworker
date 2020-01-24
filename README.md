@@ -121,12 +121,12 @@ __Is used in the master script.__
 - `runWorker(workerPathname)`    -- needs to be required/imported to initialize a worker, returns a Promise to await, resolves as [Cluster Worker](https://nodejs.org/api/cluster.html#cluster_class_worker) with a few additions (mainly, the proxies to the exported functions - see additional members below)!
 
 _Note:_
--  `runWorker(workerPathname [, useModeFast = true [, enableRespawn = false]])`
+- `runWorker(workerPathname [, useModeFast = true [, enableRespawn = false]])`
 - `runWorker(workerPathname, { useModeFast: true, enableRespawn: false })` (with option object, properties are optional)
- has a `useModeFast` that toggles 2 ways of loading the worker script:
-1. __TRUE__: is faster: no IPC call to load script, but blocks longer on weak cpus
-2. __FALSE__: does perform better on weak single-core / dual-cores: tells the fork (using the IPC) to load the worker resulting in less blocking
-and has a `enableRespawn` that can be used to automatically listen to `on('error' ...)` and check for `.exitedAfterDisconnect` to run a new worker and triggers `.on('respawn', function(newWorker){ let old = this; ... })` on the worker object.
+  - has a `useModeFast` that toggles 2 ways of loading the worker script:
+    - __TRUE__: is faster: no IPC call to load script, but blocks longer on weak cpus
+    - __FALSE__: is slower but does perform better on weak single-core / dual-cores: tells the fork after loading (using the IPC) to load the worker resulting in less blocking
+  - and has an `enableRespawn` that can be used to automatically listen to `on('error' ...)` and check for `.exitedAfterDisconnect` to run a new worker and triggers `.on('respawn', function(newWorker){ let old = this; ... })` on the worker object.
 
 
 `runWorker()` returned worker gets __additional members__ that can be used within the master on the worker object:
