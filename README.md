@@ -16,20 +16,28 @@ $ npm i runworker
 3. use those exported functions in your master script off the worker object
 
 ## .mjs / ECMAScript Modules
-Uses `import` and `import()`, this is require free code (no magic constants and so on). You have to import `from 'runworker/esm'`. Starting the script with `node --experimental-modules ????.mjs` or `node -r esm ????.mjs`.
+Uses `import` and `import()`, this is require free code (no magic constants and so on). You have to import `runworker/esm`. 
+- Old node versions: Starting the script with `node --experimental-modules ????.mjs` or `node -r esm ????.mjs`, then `import {...} from runworker/esm`.
+- Modern node versions do not need any special precautions, but need to `import {...} from 'runworker/esm/mod.mjs'`
 
 ### index.mjs
 ```js
-import {runWorker, isMaster} from 'runworker/esm';
+import {pathToFileURL} from 'node:url';
+import {runWorker, isMaster} from 'runworker/esm/mod.mjs';
+
 
 if (isMaster)(async () => {
 
-	let worker = await runWorker('..path..to..worker/worker.mjs');
+	let workerUri = pathToFileURL('..path..to..worker/worker.mjs');
+
+	let worker = await runWorker(workerUri);
+
+ 	worker.on('error', (err) => console.error(err)); // make sure we know if something messed up
 
 	let result = await worker.test('asd');  // execute worker's exported fn 
 	console.log(result);
 
-	worker.kill();
+	worker.kill();  // we do not need it anymore to listen for function calls
 
 })();
 ```
@@ -135,6 +143,8 @@ _Note:_
 - `.workerPathname`              -- To retrive the loaded worker script file path
 - all the usual [Cluster Worker](https://nodejs.org/api/cluster.html#cluster_class_worker) methods and properties apply
     - `.process.pid` can be used to access the unique worker id
+    - `.on('error', fn)` should be used
+    - `.on('exit', fn)` should be used
 
 _Note:_ Multiple workers can be instantiated from different or the same module scripts.
 
